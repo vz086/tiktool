@@ -38,8 +38,8 @@ Video Tutorial: https://www.youtube.com/watch?v=O-MBgMulvmk
 1. Install Python 3.8+ and add it to PATH during installation.
 2. Install Google Chrome.
 3. Download and extract the latest release ZIP.
-4. Open a terminal in the directory and install the needed packages with pip install -r requirements.txt
-5. Run the application through python main.py
+4. Open a terminal in the directory and install the needed packages with `pip install -r requirements.txt`
+5. Run the application through `python main.py`
 6. Input your links in the configuration tab.
 7. Start one of the bots!
 8. Star the project if it works! ⭐️
