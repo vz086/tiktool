@@ -43,8 +43,10 @@ TikTool v1.1 is a bot application designed to automate interactions on the zefoy
 6. Input your links in the configuration tab.
 7. Start one of the bots!
 8. Star the project if it works! ⭐️
+
+<br>
       
-## Example
+## Example<br>
 
 <img src="https://github.com/user-attachments/assets/c6f0ae61-bc2e-4403-b068-bd7ca194c7b3"><br>
 https://www.tiktok.com/@tiktoolproof<br>
