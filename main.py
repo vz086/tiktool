@@ -6,7 +6,6 @@ import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-import urllib
 from utils.captcha import CaptchaWindow
 
 class App(customtkinter.CTk):
