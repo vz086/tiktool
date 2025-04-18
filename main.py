@@ -114,8 +114,9 @@ class App(customtkinter.CTk):
             button_color="#ffffff",
             button_hover_color="#cccccc",
             command=lambda: self.handle_switch_toggle(self.follower_switch, "followers"))
+
         self.follower_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew")
-        
+        self.follower_switch.configure(state="disabled")
         self.third_frame_textbox = customtkinter.CTkTextbox(self.third_frame, width=350, height=350)
         self.third_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew")
 
@@ -226,19 +227,19 @@ class App(customtkinter.CTk):
         openZefoy()
         like = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[3]/div/button').click()
         time.sleep(1)
-        input = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/input')
+        input = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/input')
         input.send_keys(self.entry2.get())
         time.sleep(1)
         self.second_frame_textbox.insert("end", "Likebot started!\n")
         while self.likes_bot_running:
             try:
                 # Click the search button
-                search_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/div/button')
+                search_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/div/button')
                 search_button.click()
                 time.sleep(1)
                 # Try to find and click the target button
                 try:
-                    target_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/div/div[1]/div/form/button')
+                    target_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/div/div[1]/div/form/button')
                     target_button.click()
                     self.second_frame_textbox.insert("end", "Likes sent successfully!\n")
                     self.second_frame_textbox.see("end")
@@ -261,19 +262,19 @@ class App(customtkinter.CTk):
         openZefoy()
         follower = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[2]/div/button').click()
         time.sleep(1)
-        input = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/input')
+        input = driver.find_element(By.XPATH, '/html/body/div[16]/div/form/div/input')
         input.send_keys(self.entry1.get())
         time.sleep(1)
         self.third_frame_textbox.insert("end", "Followbot started!\n")
         while self.followers_bot_running:
             try:
                 # Click the search button
-                search_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/div/button')
+                search_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/form/div/div/button')
                 search_button.click()
                 time.sleep(1)
                 # Try to find and click the target button
                 try:
-                    target_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/div/div[1]/div/form/button')
+                    target_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/div/div[1]/div/form/button')
                     target_button.click()
                     self.third_frame_textbox.insert("end", "Followers sent successfully!\n")
                     self.third_frame_textbox.see("end")
