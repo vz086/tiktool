@@ -5,7 +5,7 @@
   <img src="https://github.com/user-attachments/assets/0212ce46-1e7b-41fa-a7b1-9a9cd4b46101" width="350" height="300">
 </p>
 <p align="center">
-  <b>Star Goals:<br>⭐ 10 Stars - Small update - Better UI, Retry Captcha, Bot Statistics [ Starting on it soon ]<br>⭐ 25 Stars - Binary Cooldown Bypass [2x faster]<br>⭐ 50 Stars - Change to request-based script [10x faster]</>
+  <b>Star Goals:<br>⭐ 10 Stars - Small update - Better UI, Retry Captcha, Bot Statistics [ Starting on it soon ]<br>⭐ 15 Stars - Add comment likes, shares and favourites <br>⭐ 25 Stars - Binary Cooldown Bypass [2x faster]<br>⭐ 50 Stars - Change to request-based script [10x faster]</>
     <br>
 </p>
 
