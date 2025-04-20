@@ -18,7 +18,7 @@ class App(customtkinter.CTk):
         # Set dark mode by default
         customtkinter.set_appearance_mode("dark")
         
-        self.title("TikTool V1.0")
+        self.title("TikTool V2.0")
         self.geometry("800x550")  # Increased size for better UI
         
         # Initialize statistics
