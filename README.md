@@ -2,7 +2,8 @@
 <h1 align="center">TikTool v1.2</h1>
 <h3 align="center">Scroll down for an installation guide.</h3>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0212ce46-1e7b-41fa-a7b1-9a9cd4b46101" width="350" height="300">
+  <img src="https://github.com/user-attachments/assets/0212ce46-1e7b-41fa-a7b1-9a9cd4b46101" width="350" height="300"><br>
+  <img alt="ViewCount" src="https://views.whatilearened.today/views/github/AdamBankz/tiktool.svg" align="center">
 </p>
 <p align="center">
   <b>Star Goals:<br><s>⭐ 10 Stars - Small update - Better UI, Retry Captcha, Bot Statistics</s><br>⭐ 15 Stars - Add comment likes, shares and favourites <br>⭐ 25 Stars - Binary Cooldown Bypass [2x faster]<br>⭐ 50 Stars - Change to request-based script [10x faster]</>
@@ -11,9 +12,8 @@
 
 ## Preview
 
-<p align="center">
-<img src="https://github.com/user-attachments/assets/3082044e-4d1c-460b-b403-a4884389fd33" width="auto" height="auto">
-</p>
+
+
 
 <br>
 
