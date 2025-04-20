@@ -21,17 +21,16 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode("dark")
 
         self.title("TikTool V1.0")
-        self.geometry("800x550") # Increased size for better UI
+        self.geometry("950x650") # Increased size for better UI
 
         # Initialize statistics
         self.total_views = 0
         self.total_likes = 0
         self.total_followers = 0
-        # --- NEW STATS (OPTIONAL, but good practice) ---
         self.total_shares = 0
         self.total_favourites = 0
         self.total_comment_likes = 0
-        # --- END NEW STATS ---
+
 
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
@@ -134,14 +133,14 @@ class App(customtkinter.CTk):
         self.followers_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Followers: {self.total_followers}", font=customtkinter.CTkFont(size=16))
         self.followers_stat.grid(row=3, column=0, padx=20, pady=2, sticky="w") # Align left
 
-        # self.shares_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Shares: {self.total_shares}", font=customtkinter.CTkFont(size=16))
-        # self.shares_stat.grid(row=4, column=0, padx=20, pady=2, sticky="w")
+        self.shares_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Shares: {self.total_shares}", font=customtkinter.CTkFont(size=16))
+        self.shares_stat.grid(row=4, column=0, padx=20, pady=2, sticky="w")
 
-        # self.favourites_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Favourites: {self.total_favourites}", font=customtkinter.CTkFont(size=16))
-        # self.favourites_stat.grid(row=5, column=0, padx=20, pady=2, sticky="w")
+        self.favourites_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Favourites: {self.total_favourites}", font=customtkinter.CTkFont(size=16))
+        self.favourites_stat.grid(row=5, column=0, padx=20, pady=2, sticky="w")
 
-        # self.comment_likes_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Comment Likes: {self.total_comment_likes}", font=customtkinter.CTkFont(size=16))
-        # self.comment_likes_stat.grid(row=6, column=0, padx=20, pady=2, sticky="w")
+        self.comment_likes_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Comment Likes: {self.total_comment_likes}", font=customtkinter.CTkFont(size=16))
+        self.comment_likes_stat.grid(row=6, column=0, padx=20, pady=2, sticky="w")
 
 
 
@@ -588,7 +587,7 @@ class App(customtkinter.CTk):
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[11]/div/div/div[1]/div/form/button')
                         target_button.click()
-                        self.total_views += 1000
+                        self.shares_stat += 150
                         self.views_stat.configure(text=f"Total Views: {self.total_views}")
                         self.shares_frame_textbox.insert("end", "150 shares sent successfully!\n")
                         self.shares_frame_textbox.see("end")
@@ -629,9 +628,9 @@ class App(customtkinter.CTk):
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[12]/div/div/div[1]/div/form/button')
                         target_button.click()
-                        self.total_views += 1000
+                        self.favourites_stat += 90
                         self.views_stat.configure(text=f"Total Views: {self.total_views}")
-                        self.favourites_frame_textbox.insert("end", "Favourites sent successfully!\n")
+                        self.favourites_frame_textbox.insert("end", "90 Favourites sent successfully!\n")
                         self.favourites_frame_textbox.see("end")
                     except:
                         self.favourites_frame_textbox.see("end")
