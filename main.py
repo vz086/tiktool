@@ -18,7 +18,7 @@ class App(customtkinter.CTk):
         # Set dark mode by default
         customtkinter.set_appearance_mode("dark")
         
-        self.title("TikTool V2.0")
+        self.title("TikTool V1.0")
         self.geometry("800x550")  # Increased size for better UI
         
         # Initialize statistics
@@ -365,7 +365,7 @@ class App(customtkinter.CTk):
 def openZefoy():
     global driver
     chrome_options = uc.ChromeOptions()  
-    #chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
     driver = uc.Chrome(options=chrome_options)
     driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": ["https://fundingchoicesmessages.google.com/*"]})
     driver.execute_cdp_cmd("Network.enable", {})
