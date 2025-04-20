@@ -6,6 +6,9 @@ import time
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from utils.captcha import CaptchaWindow
 
 class App(customtkinter.CTk):
@@ -16,7 +19,13 @@ class App(customtkinter.CTk):
         customtkinter.set_appearance_mode("dark")
         
         self.title("TikTool V1.0")
-        self.geometry("700x450")
+        self.geometry("800x550")  # Increased size for better UI
+        
+        # Initialize statistics
+        self.total_views = 0
+        self.total_likes = 0
+        self.total_followers = 0
+        
         # set grid layout 1x2
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -49,39 +58,49 @@ class App(customtkinter.CTk):
                                                       image=self.chat_image, anchor="w", command=self.frame_2_button_event)
         self.frame_2_button.grid(row=2, column=0, sticky="ew")
 
-
         self.frame_3_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Followers",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                       image=self.add_user_image, anchor="w", command=self.frame_3_button_event)
         self.frame_3_button.grid(row=3, column=0, sticky="ew")
-
 
         self.frame_4_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Views",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                       image=self.add_user_image, anchor="w", command=self.frame_4_button_event)
         self.frame_4_button.grid(row=4, column=0, sticky="ew")
 
-
         # create home frame
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.home_frame.grid_columnconfigure(0, weight=1)
 
+        # Logo
         self.home_frame_large_image_label = customtkinter.CTkLabel(self.home_frame, text="", image=self.large_test_image)
-        self.home_frame_large_image_label.grid(row=0, column=0, padx=20, pady=10)
+        self.home_frame_large_image_label.grid(row=0, column=0, padx=20, pady=5)
+
+        # Statistics frame
+        self.stats_frame = customtkinter.CTkFrame(self.home_frame, corner_radius=10)
+        self.stats_frame.grid(row=1, column=0, padx=20, pady=5, sticky="nsew")
+
+        self.stats_label = customtkinter.CTkLabel(self.stats_frame, text="Bot Statistics", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.stats_label.grid(row=0, column=0, padx=20, pady=5, sticky="w") # Align left
+
+        self.views_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Views: {self.total_views}", font=customtkinter.CTkFont(size=16))
+        self.views_stat.grid(row=1, column=0, padx=20, pady=2, sticky="w") # Align left
+
+        self.likes_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Likes: {self.total_likes}", font=customtkinter.CTkFont(size=16))
+        self.likes_stat.grid(row=2, column=0, padx=20, pady=2, sticky="w") # Align left
+
+        self.followers_stat = customtkinter.CTkLabel(self.stats_frame, text=f"Total Followers: {self.total_followers}", font=customtkinter.CTkFont(size=16))
+        self.followers_stat.grid(row=3, column=0, padx=20, pady=2, sticky="w") # Align left
 
         self.home_frame_large_image_label = customtkinter.CTkLabel(self.home_frame, text="Configuration", font=customtkinter.CTkFont(size=20, weight="bold"))
-        self.home_frame_large_image_label.grid(row=1, column=0, padx=20, pady=10)
+        self.home_frame_large_image_label.grid(row=2, column=0, padx=20, pady=10, sticky="w") # Align left
 
+        self.entry1 = customtkinter.CTkEntry(self.home_frame, width=300, placeholder_text="Profile Link")
+        self.entry1.grid(row=3, column=0, columnspan=2, padx=20, pady=10, sticky="ew") # Stretch horizontally
+        self.entry1.configure(state="disabled")
 
-
-
-        self.entry1 = customtkinter.CTkEntry(self.home_frame,width=300, placeholder_text="Profile Link")
-        self.entry1.grid(row=2, column=0, columnspan=2, padx=20, pady=10)
-
-        self.entry2 = customtkinter.CTkEntry(self.home_frame,width=300, placeholder_text="Video Link")
-        self.entry2.grid(row=3, column=0, columnspan=2, padx=20, pady=10)
-
-        # create second frame
+        self.entry2 = customtkinter.CTkEntry(self.home_frame, width=300, placeholder_text="Video Link")
+        self.entry2.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky="ew") # Stretch horizontally        # create second frame
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.second_frame.grid_columnconfigure((0, 1, 2), weight=1)
         self.like_switch = customtkinter.CTkSwitch(
@@ -224,137 +243,191 @@ class App(customtkinter.CTk):
 
     def run_likes_bot(self):
         global driver
-        openZefoy()
-        like = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[3]/div/button').click()
-        time.sleep(1)
-        input = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/input')
-        input.send_keys(self.entry2.get())
-        time.sleep(1)
-        self.second_frame_textbox.insert("end", "Likebot started!\n")
-        while self.likes_bot_running:
-            try:
-                # Click the search button
-                search_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/div/button')
-                search_button.click()
-                time.sleep(1)
-                # Try to find and click the target button
+        try:
+            openZefoy()
+            like = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[3]/div/button').click()
+            time.sleep(1)
+            input = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/input')
+            input.send_keys(self.entry2.get())
+            time.sleep(1)
+            self.second_frame_textbox.insert("end", "Likebot started!\n")
+            while self.likes_bot_running:
                 try:
-                    target_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/div/div[1]/div/form/button')
-                    target_button.click()
-                    self.second_frame_textbox.insert("end", "Likes sent successfully!\n")
+                    # Click the search button
+                    search_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/div/button')
+                    search_button.click()
+                    time.sleep(1)
+                    # Try to find and click the target button
+                    try:
+                        target_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/div/div[1]/div/form/button')
+                        target_button.click()
+                        self.total_likes += 15
+                        self.likes_stat.configure(text=f"Total Likes: {self.total_likes}")
+                        self.second_frame_textbox.insert("end", "15 likes sent successfully!\n")
+                        self.second_frame_textbox.see("end")
+                    except:
+                        self.second_frame_textbox.see("end")
+                    
+                    time.sleep(3)  # Wait 3 seconds before next attempt
+                    
+                except Exception as e:
+                    self.second_frame_textbox.insert("end", f"Error: {str(e)}\n")
                     self.second_frame_textbox.see("end")
-                except:
-                    self.second_frame_textbox.see("end")
-                
-                time.sleep(3)  # Wait 3 seconds before next attempt
-                
-            except Exception as e:
-                self.second_frame_textbox.insert("end", f"Error: {str(e)}\n")
-                self.second_frame_textbox.see("end")
-                time.sleep(3)  # Wait 3 seconds before retrying
-                
-        driver.quit()
-        self.second_frame_textbox.insert("end", "Views bot stopped.\n")
-        self.second_frame_textbox.see("end")
+                    time.sleep(3)  # Wait 3 seconds before retrying
+                    
+            driver.quit()
+            self.second_frame_textbox.insert("end", "Likes bot stopped.\n")
+            self.second_frame_textbox.see("end")
+        except Exception as e:
+            self.second_frame_textbox.insert("end", f"Error: {str(e)}\n")
+            self.second_frame_textbox.see("end")
 
     def run_followers_bot(self):
         global driver
-        openZefoy()
-        follower = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[2]/div/button').click()
-        time.sleep(1)
-        input = driver.find_element(By.XPATH, '/html/body/div[16]/div/form/div/input')
-        input.send_keys(self.entry1.get())
-        time.sleep(1)
-        self.third_frame_textbox.insert("end", "Followbot started!\n")
-        while self.followers_bot_running:
-            try:
-                # Click the search button
-                search_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/form/div/div/button')
-                search_button.click()
-                time.sleep(1)
-                # Try to find and click the target button
+        try:
+            openZefoy()
+            follower = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[2]/div/button').click()
+            time.sleep(1)
+            input = driver.find_element(By.XPATH, '/html/body/div[16]/div/form/div/input')
+            input.send_keys(self.entry1.get())
+            time.sleep(1)
+            self.third_frame_textbox.insert("end", "Followbot started!\n")
+            while self.followers_bot_running:
                 try:
-                    target_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/div/div[1]/div/form/button')
-                    target_button.click()
-                    self.third_frame_textbox.insert("end", "Followers sent successfully!\n")
+                    # Click the search button
+                    search_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/form/div/div/button')
+                    search_button.click()
+                    time.sleep(1)
+                    # Try to find and click the target button
+                    try:
+                        target_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/div/div[1]/div/form/button')
+                        target_button.click()
+                        self.total_followers += 1
+                        self.followers_stat.configure(text=f"Total Followers: {self.total_followers}")
+                        self.third_frame_textbox.insert("end", "Followers sent successfully!\n")
+                        self.third_frame_textbox.see("end")
+                    except:
+                        self.third_frame_textbox.see("end")
+                    
+                    time.sleep(3)  # Wait 3 seconds before next attempt
+                    
+                except Exception as e:
+                    self.third_frame_textbox.insert("end", f"Error: {str(e)}\n")
                     self.third_frame_textbox.see("end")
-                except:
-                    self.third_frame_textbox.see("end")
-                
-                time.sleep(3)  # Wait 3 seconds before next attempt
-                
-            except Exception as e:
-                self.third_frame_textbox.insert("end", f"Error: {str(e)}\n")
-                self.third_frame_textbox.see("end")
-                time.sleep(3)  # Wait 3 seconds before retrying
-                
-        driver.quit()
-        self.third_frame_textbox.insert("end", "Views bot stopped.\n")
-        self.third_frame_textbox.see("end")
+                    time.sleep(3)  # Wait 3 seconds before retrying
+                    
+            driver.quit()
+            self.third_frame_textbox.insert("end", "Followers bot stopped.\n")
+            self.third_frame_textbox.see("end")
+        except Exception as e:
+            self.third_frame_textbox.insert("end", f"Error: {str(e)}\n")
+            self.third_frame_textbox.see("end")
 
     def run_views_bot(self):
         global driver
-        openZefoy()
-        view = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[6]/div/button').click()
-        time.sleep(1)
-        input = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/input')
-        input.send_keys(self.entry2.get())
-        time.sleep(1)
-        self.fourth_frame_textbox.insert("end", "Viewbot started!\n")
-        while self.views_bot_running:
-            try:
-                # Click the search button
-                search_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/div/button')
-                search_button.click()
-                time.sleep(1)
-                # Try to find and click the target button
+        try:
+            openZefoy()
+            view = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[6]/div/button').click()
+            time.sleep(1)
+            input = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/input')
+            input.send_keys(self.entry2.get())
+            time.sleep(1)
+            self.fourth_frame_textbox.insert("end", "Viewbot started!\n")
+            while self.views_bot_running:
                 try:
-                    target_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/div/div[1]/div/form/button')
-                    target_button.click()
-                    self.fourth_frame_textbox.insert("end", "1000 views sent successfully!\n")
+                    search_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/form/div/div/button')
+                    search_button.click()
+                    time.sleep(1)
+                    try:
+                        target_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/div/div[1]/div/form/button')
+                        target_button.click()
+                        self.total_views += 1000
+                        self.views_stat.configure(text=f"Total Views: {self.total_views}")
+                        self.fourth_frame_textbox.insert("end", "1000 views sent successfully!\n")
+                        self.fourth_frame_textbox.see("end")
+                    except:
+                        self.fourth_frame_textbox.see("end")
+                    
+                    time.sleep(3)
+                    
+                except Exception as e:
+                    self.fourth_frame_textbox.insert("end", f"Error: {str(e)}\n")
                     self.fourth_frame_textbox.see("end")
-                except:
-                    self.fourth_frame_textbox.see("end")
-                
-                time.sleep(3)  # Wait 3 seconds before next attempt
-                
-            except Exception as e:
-                self.fourth_frame_textbox.insert("end", f"Error: {str(e)}\n")
-                self.fourth_frame_textbox.see("end")
-                time.sleep(3)  # Wait 3 seconds before retrying
-                
-        driver.quit()
-        self.fourth_frame_textbox.insert("end", "Views bot stopped.\n")
-        self.fourth_frame_textbox.see("end")
+                    time.sleep(3)
+                    
+            driver.quit()
+            self.fourth_frame_textbox.insert("end", "Views bot stopped.\n")
+            self.fourth_frame_textbox.see("end")
+        except Exception as e:
+            self.fourth_frame_textbox.insert("end", f"Error: {str(e)}\n")
+            self.fourth_frame_textbox.see("end")
 
 def openZefoy():
     global driver
     chrome_options = uc.ChromeOptions()  
-    chrome_options.add_argument("--headless")
+    #chrome_options.add_argument("--headless")
     driver = uc.Chrome(options=chrome_options)
     driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": ["https://fundingchoicesmessages.google.com/*"]})
     driver.execute_cdp_cmd("Network.enable", {})
     driver.get("https://zefoy.com/")
     time.sleep(1)
-    complete = captcha()
+    
+    if not captcha():
+        raise Exception("Failed to solve captcha after multiple attempts")
+
 
 
 def captcha():
-    input = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/form/div/div/div/input[1]')
-    input.send_keys(captchaSave())
-    time.sleep(3)
-    submit = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/form/div/div/div/div/button').click()
-    time.sleep(3)
+    is_retry = False
+    while True:
+        try:
+            input_field = driver.find_element(By.ID, "captchatoken")
+            input_field.clear()
+            solution = captchaSave(is_retry)
+            if solution is None:
+                return False 
+            input_field.send_keys(solution)
+            time.sleep(1)
+            submit_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-lg.btn-block.rounded-0.submit-captcha[type="submit"]').click()
+            time.sleep(3)
 
-
-def captchaSave():
+            try:
+                error_popup_close_button = driver.find_element(By.XPATH, "/html/body/div[5]/div/div/div[3]/button")
+                error_popup_close_button.click()
+                time.sleep(1)
+                is_retry = True
+                time.sleep(2) 
+                continue 
+            except:
+                try:
+                    driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]')
+                    return True
+                except:
+                    is_retry = True
+                    time.sleep(2)
+                    continue
+        except Exception as e:
+            time.sleep(5)
+            continue
+            
+def captchaSave(is_retry=False):
     global driver
-    with open(f'captcha.png', 'wb') as file:
-        l = driver.find_element(By.XPATH, '/html/body/div[5]/div[2]/form/div/div/img')
-        file.write(l.screenshot_as_png)
-    captcha_window = CaptchaWindow()
-    return captcha_window.result
+    time.sleep(1) 
+    possible_div_numbers = [4, 5, 6]  
+    for div_num in possible_div_numbers:
+        xpath = f'/html/body/div[{div_num}]/div[2]/form/div/div/img'
+        try:
+            l = driver.find_element(By.XPATH, xpath)
+            with open(f'captcha.png', 'wb') as file:
+                file.write(l.screenshot_as_png)
+            captcha_window = CaptchaWindow(is_retry)
+            return captcha_window.result
+        except:
+            print(f"Image not found with XPath: {xpath}")
+            continue  
 
+    print("Could not find captcha image after trying multiple XPaths.")
+    return None
 
 if __name__ == "__main__":
     app = App()
