@@ -3,7 +3,6 @@ import os
 from PIL import Image
 import threading
 import time
-
 import undetected_chromedriver as uc
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -11,19 +10,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from utils.captcha import CaptchaWindow
+import requests
 
+
+driver = None
+webhook = None
 
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
-        # Set dark mode by default
         customtkinter.set_appearance_mode("dark")
 
         self.title("TikTool V1.0")
-        self.geometry("950x650") # Increased size for better UI
+        self.geometry("950x650") 
 
-        # Initialize statistics
+
         self.total_views = 0
         self.total_likes = 0
         self.total_followers = 0
@@ -32,42 +34,54 @@ class App(customtkinter.CTk):
         self.total_comment_likes = 0
 
 
-        # set grid layout 1x2
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        # load images with dark mode image only
-        # Using placeholder paths if assets folder isn't guaranteed
+
         try:
-            image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "assets")
+            script_dir = os.path.dirname(os.path.realpath(__file__))
+            image_path = os.path.join(script_dir, "assets")
+
+            if not os.path.isdir(image_path):
+                 raise FileNotFoundError("Assets directory not found at expected location")
+
             self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "CustomTkinter_logo_single.png")), size=(26, 26))
             self.large_test_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "large_test_image.png")), size=(200, 200))
             self.image_icon_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "image_icon_light.png")), size=(20, 20))
             self.home_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "home_light.png")), size=(20, 20))
             self.chat_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "chat_light.png")), size=(20, 20))
             self.add_user_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "add_user_light.png")), size=(20, 20))
-            # --- NEW IMAGE (using existing one as placeholder) ---
-            self.generic_action_image = self.add_user_image # Reusing image
-            # --- END NEW IMAGE ---
-        except FileNotFoundError:
-            print("Warning: Asset images not found. Using placeholders.")
-            # Create placeholder images if files are missing
-            placeholder_img = Image.new('RGB', (20, 20), color = 'grey')
-            self.logo_image = customtkinter.CTkImage(placeholder_img, size=(26, 26))
-            self.large_test_image = customtkinter.CTkImage(Image.new('RGB', (200, 200), color='darkgrey'), size=(200, 200))
-            self.image_icon_image = customtkinter.CTkImage(placeholder_img, size=(20, 20))
-            self.home_image = customtkinter.CTkImage(placeholder_img, size=(20, 20))
-            self.chat_image = customtkinter.CTkImage(placeholder_img, size=(20, 20))
-            self.add_user_image = customtkinter.CTkImage(placeholder_img, size=(20, 20))
-            self.generic_action_image = self.add_user_image # Reusing placeholder
+            self.webhook = customtkinter.CTkImage(Image.open(os.path.join(image_path, "discord.png")), size=(20, 20))
+            self.generic_action_image = self.add_user_image
 
-        # create navigation frame
+            self.webhook_image = self.webhook
+
+        except (FileNotFoundError, NameError): 
+            print("Warning: Asset images not found or PIL library issue. Using placeholders.")
+
+            placeholder_img_26 = Image.new('RGB', (26, 26), color = 'grey')
+            placeholder_img_200 = Image.new('RGB', (200, 200), color='darkgrey')
+            placeholder_img_20 = Image.new('RGB', (20, 20), color = 'grey')
+
+
+            self.logo_image = customtkinter.CTkImage(light_image=placeholder_img_26, dark_image=placeholder_img_26, size=(26, 26))
+            self.large_test_image = customtkinter.CTkImage(light_image=placeholder_img_200, dark_image=placeholder_img_200, size=(200, 200))
+            self.image_icon_image = customtkinter.CTkImage(light_image=placeholder_img_20, dark_image=placeholder_img_20, size=(20, 20))
+            self.home_image = customtkinter.CTkImage(light_image=placeholder_img_20, dark_image=placeholder_img_20, size=(20, 20))
+            self.chat_image = customtkinter.CTkImage(light_image=placeholder_img_20, dark_image=placeholder_img_20, size=(20, 20))
+            self.add_user_image = customtkinter.CTkImage(light_image=placeholder_img_20, dark_image=placeholder_img_20, size=(20, 20))
+            self.generic_action_image = self.add_user_image
+
+            self.webhook_image = self.generic_action_image
+
         self.navigation_frame = customtkinter.CTkFrame(self, corner_radius=0)
         self.navigation_frame.grid(row=0, column=0, sticky="nsew")
-        # --- INCREASED ROW CONFIGURE WEIGHT INDEX ---
-        self.navigation_frame.grid_rowconfigure(8, weight=1) # Adjusted from 5 to 8
 
-        self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="TikTool Bot",
+        self.navigation_frame.grid_rowconfigure(8, weight=1) 
+
+        self.navigation_frame_label = customtkinter.CTkLabel(self.navigation_frame, text="  TikTool Bot", 
+                                                               image=self.logo_image,
                                                                compound="left", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.navigation_frame_label.grid(row=0, column=0, padx=20, pady=20)
 
@@ -86,27 +100,35 @@ class App(customtkinter.CTk):
                                                       image=self.add_user_image, anchor="w", command=self.frame_3_button_event)
         self.frame_3_button.grid(row=3, column=0, sticky="ew")
 
+
         self.frame_4_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Views",
                                                       fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
                                                       image=self.add_user_image, anchor="w", command=self.frame_4_button_event)
         self.frame_4_button.grid(row=4, column=0, sticky="ew")
 
-        # --- NEW NAVIGATION BUTTONS ---
+
         self.shares_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Shares",
-                                                     fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                     image=self.generic_action_image, anchor="w", command=self.shares_button_event)
+                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      image=self.generic_action_image, anchor="w", command=self.shares_button_event)
         self.shares_button.grid(row=5, column=0, sticky="ew")
 
         self.favourites_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Favourites",
-                                                        fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                        image=self.generic_action_image, anchor="w", command=self.favourites_button_event)
+                                                         fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                         image=self.generic_action_image, anchor="w", command=self.favourites_button_event)
         self.favourites_button.grid(row=6, column=0, sticky="ew")
 
         self.comment_likes_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Comment Likes",
-                                                            fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
-                                                            image=self.generic_action_image, anchor="w", command=self.comment_likes_button_event)
+                                                             fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                             image=self.generic_action_image, anchor="w", command=self.comment_likes_button_event)
         self.comment_likes_button.grid(row=7, column=0, sticky="ew")
-        # --- END NEW NAVIGATION BUTTONS ---
+
+        self.webhook_button = customtkinter.CTkButton(self.navigation_frame, corner_radius=0, height=40, border_spacing=10, text="Webhook",
+                                                      fg_color="transparent", text_color=("gray10", "gray90"), hover_color=("gray70", "gray30"),
+                                                      image=self.webhook_image, 
+                                                      anchor="w", command=self.webhook_button_event) 
+
+        self.webhook_button.grid(row=8, column=0, sticky="sew", pady=(10, 10))
+
 
         # create home frame
         self.home_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
@@ -143,20 +165,21 @@ class App(customtkinter.CTk):
         self.comment_likes_stat.grid(row=6, column=0, padx=20, pady=2, sticky="w")
 
 
-
+        # Configuration Section Label
         self.home_frame_config_label = customtkinter.CTkLabel(self.home_frame, text="Configuration", font=customtkinter.CTkFont(size=20, weight="bold")) # Renamed variable for clarity
         self.home_frame_config_label.grid(row=2, column=0, padx=20, pady=10, sticky="w") # Align left
 
+        # Entry Fields
         self.entry1 = customtkinter.CTkEntry(self.home_frame, width=300, placeholder_text="Profile Link")
         self.entry1.grid(row=3, column=0, columnspan=2, padx=20, pady=10, sticky="ew") # Stretch horizontally
-        self.entry1.configure(state="disabled")
+        self.entry1.configure(state="disabled") # As per original code
 
         self.entry2 = customtkinter.CTkEntry(self.home_frame, width=300, placeholder_text="Video Link")
         self.entry2.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky="ew") # Stretch horizontally
 
         # create second frame (Likes)
         self.second_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.second_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.second_frame.grid_columnconfigure((0, 1, 2), weight=1) 
         self.like_switch = customtkinter.CTkSwitch(
             master=self.second_frame,
             text="Start the bot",
@@ -168,14 +191,14 @@ class App(customtkinter.CTk):
             button_color="#ffffff",
             button_hover_color="#cccccc",
             command=lambda: self.handle_switch_toggle(self.like_switch, "likes"))
-        self.like_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew") # Keep original padding for consistency
+        self.like_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew") 
 
         self.second_frame_textbox = customtkinter.CTkTextbox(self.second_frame, width=350, height=350)
-        self.second_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") # Keep original padding
+        self.second_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") 
 
         # create third frame (Followers)
         self.third_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.third_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.third_frame.grid_columnconfigure((0, 1, 2), weight=1) 
         self.follower_switch = customtkinter.CTkSwitch(
             master=self.third_frame,
             text="Start the bot",
@@ -188,14 +211,14 @@ class App(customtkinter.CTk):
             button_hover_color="#cccccc",
             command=lambda: self.handle_switch_toggle(self.follower_switch, "followers"))
 
-        self.follower_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew") # Keep original padding
-        self.follower_switch.configure(state="disabled")
+        self.follower_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew") 
+        self.follower_switch.configure(state="disabled") 
         self.third_frame_textbox = customtkinter.CTkTextbox(self.third_frame, width=350, height=350)
-        self.third_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") # Keep original padding
+        self.third_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") 
 
         # create fourth frame (Views)
         self.fourth_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.fourth_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.fourth_frame.grid_columnconfigure((0, 1, 2), weight=1) 
         self.views_switch = customtkinter.CTkSwitch(
             master=self.fourth_frame,
             text="Start the bot",
@@ -207,14 +230,14 @@ class App(customtkinter.CTk):
             button_color="#ffffff",
             button_hover_color="#cccccc",
             command=lambda: self.handle_switch_toggle(self.views_switch, "views"))
-        self.views_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew") # Keep original padding
+        self.views_switch.grid(row=0, column=1, padx=195, pady=10, sticky="nsew")
 
         self.fourth_frame_textbox = customtkinter.CTkTextbox(self.fourth_frame, width=350, height=350)
-        self.fourth_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") # Keep original padding
+        self.fourth_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew") 
 
 
         self.shares_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.shares_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.shares_frame.grid_columnconfigure((0, 1, 2), weight=1) 
         self.shares_switch = customtkinter.CTkSwitch(
             master=self.shares_frame,
             text="Start the bot",
@@ -233,7 +256,7 @@ class App(customtkinter.CTk):
 
         # create favourites frame (Sixth Frame)
         self.favourites_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.favourites_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.favourites_frame.grid_columnconfigure((0, 1, 2), weight=1)
         self.favourites_switch = customtkinter.CTkSwitch(
             master=self.favourites_frame,
             text="Start the bot",
@@ -252,7 +275,7 @@ class App(customtkinter.CTk):
 
         # create comment likes frame (Seventh Frame)
         self.comment_likes_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
-        self.comment_likes_frame.grid_columnconfigure((0, 1, 2), weight=1) # Centering column 1
+        self.comment_likes_frame.grid_columnconfigure((0, 1, 2), weight=1)
         self.comment_likes_switch = customtkinter.CTkSwitch(
             master=self.comment_likes_frame,
             text="Start the bot",
@@ -270,46 +293,80 @@ class App(customtkinter.CTk):
         self.comment_likes_frame_textbox = customtkinter.CTkTextbox(self.comment_likes_frame, width=350, height=350)
         self.comment_likes_frame_textbox.grid(row=1, column=1, padx=(7, 0), pady=(20, 0), sticky="nsew")
 
-        # --- END NEW FRAMES ---
+        self.webhook_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self.webhook_frame.grid_columnconfigure(0, weight=1) 
+        self.webhook_frame.grid_columnconfigure(1, weight=0)
+        self.webhook_frame.grid_rowconfigure(0, weight=1) 
+        self.webhook_frame.grid_rowconfigure(3, weight=1) 
 
 
-        # Initialize bot threads
+        self.webhook_label = customtkinter.CTkLabel(self.webhook_frame, text="Webhook URL:", font=customtkinter.CTkFont(size=14))
+        self.webhook_label.grid(row=1, column=0, columnspan=2, padx=20, pady=(10, 0), sticky="sw") 
+
+
+        self.webhook_entry = customtkinter.CTkEntry(self.webhook_frame, placeholder_text="Enter Discord Webhook URL", width=400) 
+        self.webhook_entry.grid(row=2, column=0, padx=(20, 5), pady=(5, 20), sticky="ew")
+
+
+        self.webhook_switch = customtkinter.CTkSwitch(master=self.webhook_frame,
+                                                      text="Enable",
+                                                      command=self.toggle_webhook_state,
+                                                      onvalue="on", offvalue="off") 
+        self.webhook_switch.grid(row=2, column=1, padx=(0, 20), pady=(5, 20), sticky="w") 
+
+
+
         self.likes_bot_thread = None
         self.followers_bot_thread = None
         self.views_bot_thread = None
-        # --- NEW THREADS ---
+ 
         self.shares_bot_thread = None
         self.favourites_bot_thread = None
         self.comment_likes_bot_thread = None
-        # --- END NEW THREADS ---
 
-        # Initialize stop flags
         self.likes_bot_running = False
         self.followers_bot_running = False
         self.views_bot_running = False
-        # --- NEW FLAGS ---
+
         self.shares_bot_running = False
         self.favourites_bot_running = False
         self.comment_likes_bot_running = False
-        # --- END NEW FLAGS ---
 
 
-        # select default frame
+
+
         self.select_frame_by_name("home")
 
+
+    def toggle_webhook_state(self):
+        global webhook 
+        if self.webhook_switch.get() == "on":
+
+            current_url = self.webhook_entry.get()
+            self.webhook_entry.configure(state="disabled")
+            webhook = current_url
+            print(f"Webhook Enabled: {webhook}") 
+        else:
+
+            self.webhook_entry.configure(state="normal")
+            webhook = None 
+            print("Webhook Disabled.") 
+
+
     def select_frame_by_name(self, name):
-        # set button color for selected button
+
         self.home_button.configure(fg_color=("gray75", "gray25") if name == "home" else "transparent")
         self.frame_2_button.configure(fg_color=("gray75", "gray25") if name == "frame_2" else "transparent")
         self.frame_3_button.configure(fg_color=("gray75", "gray25") if name == "frame_3" else "transparent")
         self.frame_4_button.configure(fg_color=("gray75", "gray25") if name == "frame_4" else "transparent")
-        # --- NEW BUTTON HIGHLIGHTING ---
+
         self.shares_button.configure(fg_color=("gray75", "gray25") if name == "shares_frame" else "transparent")
         self.favourites_button.configure(fg_color=("gray75", "gray25") if name == "favourites_frame" else "transparent")
         self.comment_likes_button.configure(fg_color=("gray75", "gray25") if name == "comment_likes_frame" else "transparent")
-        # --- END NEW BUTTON HIGHLIGHTING ---
 
-        # show selected frame
+        self.webhook_button.configure(fg_color=("gray75", "gray25") if name == "webhook_frame" else "transparent")
+
+
         if name == "home":
             self.home_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -327,7 +384,7 @@ class App(customtkinter.CTk):
         else:
             self.fourth_frame.grid_forget()
 
-        # --- NEW FRAME DISPLAY LOGIC ---
+
         if name == "shares_frame":
             self.shares_frame.grid(row=0, column=1, sticky="nsew")
         else:
@@ -340,7 +397,13 @@ class App(customtkinter.CTk):
             self.comment_likes_frame.grid(row=0, column=1, sticky="nsew")
         else:
             self.comment_likes_frame.grid_forget()
-        # --- END NEW FRAME DISPLAY LOGIC ---
+
+        if name == "webhook_frame":
+            self.webhook_frame.grid(row=0, column=1, sticky="nsew")
+        else:
+
+            if hasattr(self, 'webhook_frame'):
+                self.webhook_frame.grid_forget()
 
 
     def home_button_event(self):
@@ -355,7 +418,7 @@ class App(customtkinter.CTk):
     def frame_4_button_event(self):
         self.select_frame_by_name("frame_4")
 
-    # --- NEW BUTTON EVENTS ---
+
     def shares_button_event(self):
         self.select_frame_by_name("shares_frame")
 
@@ -364,38 +427,37 @@ class App(customtkinter.CTk):
 
     def comment_likes_button_event(self):
         self.select_frame_by_name("comment_likes_frame")
-    # --- END NEW BUTTON EVENTS ---
+
+    def webhook_button_event(self):
+        self.select_frame_by_name("webhook_frame")
+
 
 
     def handle_switch_toggle(self, activated_switch, bot_type):
-        # List of all switches
-        # --- ADDED NEW SWITCHES TO LIST ---
+
         all_switches = [
             self.like_switch, self.follower_switch, self.views_switch,
             self.shares_switch, self.favourites_switch, self.comment_likes_switch
         ]
-        # --- END ADDED NEW SWITCHES ---
 
-        # If the activated switch is being turned on
         if activated_switch.get() == "on":
-            # Turn off all other switches and stop their corresponding bots
+
             for switch in all_switches:
-                if switch != activated_switch and switch.get() == "on": # Check if it's actually on before deselecting
-                    # Determine bot type from switch and stop it
+                if switch != activated_switch and switch.get() == "on":
+
                     if switch == self.like_switch: self.likes_bot_running = False
                     elif switch == self.follower_switch: self.followers_bot_running = False
                     elif switch == self.views_switch: self.views_bot_running = False
                     elif switch == self.shares_switch: self.shares_bot_running = False
                     elif switch == self.favourites_switch: self.favourites_bot_running = False
                     elif switch == self.comment_likes_switch: self.comment_likes_bot_running = False
-                    switch.deselect() # Turn the switch UI off
+                    switch.deselect() 
 
 
-            # Start the appropriate bot
             if bot_type == "likes":
-                if not self.likes_bot_running: # Prevent starting if already running somehow
+                if not self.likes_bot_running: 
                     self.likes_bot_running = True
-                    self.likes_bot_thread = threading.Thread(target=self.run_likes_bot, daemon=True) # Use daemon threads
+                    self.likes_bot_thread = threading.Thread(target=self.run_likes_bot, daemon=True) 
                     self.likes_bot_thread.start()
             elif bot_type == "followers":
                  if not self.followers_bot_running:
@@ -407,7 +469,7 @@ class App(customtkinter.CTk):
                     self.views_bot_running = True
                     self.views_bot_thread = threading.Thread(target=self.run_views_bot, daemon=True)
                     self.views_bot_thread.start()
-            # --- NEW BOT START LOGIC ---
+
             elif bot_type == "shares":
                 if not self.shares_bot_running:
                     self.shares_bot_running = True
@@ -423,29 +485,27 @@ class App(customtkinter.CTk):
                     self.comment_likes_bot_running = True
                     self.comment_likes_bot_thread = threading.Thread(target=self.run_comment_likes_bot, daemon=True)
                     self.comment_likes_bot_thread.start()
-            # --- END NEW BOT START LOGIC ---
 
-        else: # Switch is being turned off
-            # Stop the appropriate bot
+
+        else:
             if bot_type == "likes":
                 self.likes_bot_running = False
             elif bot_type == "followers":
                 self.followers_bot_running = False
             elif bot_type == "views":
                 self.views_bot_running = False
-            # --- NEW BOT STOP LOGIC ---
             elif bot_type == "shares":
                 self.shares_bot_running = False
             elif bot_type == "favourites":
                 self.favourites_bot_running = False
             elif bot_type == "comment_likes":
                 self.comment_likes_bot_running = False
-            # --- END NEW BOT STOP LOGIC ---
-
-    # --- Original Bot Functions (unchanged logic) ---
 
     def run_likes_bot(self):
         global driver
+        payload = {
+            "content": "15 likes sent successfully."
+            }
         try:
             openZefoy()
             like = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[3]/div/button').click()
@@ -456,11 +516,9 @@ class App(customtkinter.CTk):
             self.second_frame_textbox.insert("end", "Likebot started!\n")
             while self.likes_bot_running:
                 try:
-                    # Click the search button
                     search_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/form/div/div/button')
                     search_button.click()
                     time.sleep(1)
-                    # Try to find and click the target button
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/div/div[1]/div/form/button')
                         target_button.click()
@@ -468,15 +526,16 @@ class App(customtkinter.CTk):
                         self.likes_stat.configure(text=f"Total Likes: {self.total_likes}")
                         self.second_frame_textbox.insert("end", "15 likes sent successfully!\n")
                         self.second_frame_textbox.see("end")
+                        requests.post(webhook, payload)
                     except:
                         self.second_frame_textbox.see("end")
                     
-                    time.sleep(3)  # Wait 3 seconds before next attempt
+                    time.sleep(3)
                     
                 except Exception as e:
                     self.second_frame_textbox.insert("end", f"Error: {str(e)}\n")
                     self.second_frame_textbox.see("end")
-                    time.sleep(3)  # Wait 3 seconds before retrying
+                    time.sleep(3)
                     
             driver.quit()
             self.second_frame_textbox.insert("end", "Likes bot stopped.\n")
@@ -488,6 +547,9 @@ class App(customtkinter.CTk):
   
     def run_followers_bot(self):
         global driver
+        payload = {
+            "content": "Follows sent successfully!"
+            }
         try:
             openZefoy()
             follower = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[2]/div/button').click()
@@ -498,11 +560,10 @@ class App(customtkinter.CTk):
             self.third_frame_textbox.insert("end", "Followbot started!\n")
             while self.followers_bot_running:
                 try:
-                    # Click the search button
                     search_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/form/div/div/button')
                     search_button.click()
                     time.sleep(1)
-                    # Try to find and click the target button
+
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[6]/div/div/div[1]/div/form/button')
                         target_button.click()
@@ -510,15 +571,16 @@ class App(customtkinter.CTk):
                         self.followers_stat.configure(text=f"Total Followers: {self.total_followers}")
                         self.third_frame_textbox.insert("end", "Followers sent successfully!\n")
                         self.third_frame_textbox.see("end")
+                        requests.post(webhook, payload)
                     except:
                         self.third_frame_textbox.see("end")
                     
-                    time.sleep(3)  # Wait 3 seconds before next attempt
+                    time.sleep(3)  
                     
                 except Exception as e:
                     self.third_frame_textbox.insert("end", f"Error: {str(e)}\n")
                     self.third_frame_textbox.see("end")
-                    time.sleep(3)  # Wait 3 seconds before retrying
+                    time.sleep(3) 
                     
             driver.quit()
             self.third_frame_textbox.insert("end", "Followers bot stopped.\n")
@@ -530,6 +592,9 @@ class App(customtkinter.CTk):
 
     def run_views_bot(self):
         global driver
+        payload = {
+            "content": "1000 views sent successfully!"
+            }
         try:
             openZefoy()
             view = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[6]/div/button').click()
@@ -550,6 +615,7 @@ class App(customtkinter.CTk):
                         self.views_stat.configure(text=f"Total Views: {self.total_views}")
                         self.fourth_frame_textbox.insert("end", "1000 views sent successfully!\n")
                         self.fourth_frame_textbox.see("end")
+                        requests.post(webhook, payload)
                     except:
                         self.fourth_frame_textbox.see("end")
                     
@@ -567,7 +633,6 @@ class App(customtkinter.CTk):
             self.fourth_frame_textbox.insert("end", f"Error: {str(e)}\n")
             self.fourth_frame_textbox.see("end")
 
-    # --- NEW BOT FUNCTIONS (Placeholder) ---
     def run_shares_bot(self):
         global driver
         
@@ -612,6 +677,9 @@ class App(customtkinter.CTk):
 
     def run_favourites_bot(self):
         global driver
+        payload = {
+            "content": "90 favourites sent successfully."
+            }
         try:
             openZefoy()
             fav = driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]/div/div/div[8]/div/button').click()
@@ -632,6 +700,7 @@ class App(customtkinter.CTk):
                         self.views_stat.configure(text=f"Total Views: {self.total_views}")
                         self.favourites_frame_textbox.insert("end", "90 Favourites sent successfully!\n")
                         self.favourites_frame_textbox.see("end")
+                        requests.post(webhook, payload)
                     except:
                         self.favourites_frame_textbox.see("end")
                     
@@ -652,70 +721,103 @@ class App(customtkinter.CTk):
     def run_comment_likes_bot(self):
         print("")
 
+
+
 def openZefoy():
     global driver
-    chrome_options = uc.ChromeOptions()  
-    #chrome_options.add_argument("--headless")
+    chrome_options = uc.ChromeOptions()
+    chrome_options.add_argument("--headless") 
     driver = uc.Chrome(options=chrome_options)
-    driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": ["https://fundingchoicesmessages.google.com/*"]})
-    driver.execute_cdp_cmd("Network.enable", {})
+
+    try:
+        driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": ["https://fundingchoicesmessages.google.com/*"]})
+        driver.execute_cdp_cmd("Network.enable", {})
+    except Exception as cdp_err:
+        print(f"Warning: Could not set CDP network blocking: {cdp_err}")
+
     driver.get("https://zefoy.com/")
     time.sleep(3)
-    if not captcha():
+    if not captcha(): 
+        if driver:
+            driver.quit()
         raise Exception("Failed to solve captcha after multiple attempts")
 
 
-
 def captcha():
+    """Original captcha function structure."""
+    global driver 
     is_retry = False
-    while True:
+    max_attempts = 5
+    attempts = 0
+    while attempts < max_attempts:
+        attempts+=1
         try:
-            input_field = driver.find_element(By.ID, "captchatoken")
+
+            time.sleep(1) 
+            input_field = driver.find_element(By.ID, "captchatoken") 
             input_field.clear()
             solution = captchaSave(is_retry)
-            if solution is None:
-                return False 
+            if solution is None: 
+                print("Captcha solving cancelled or failed.")
+                return False
+
             input_field.send_keys(solution)
             time.sleep(1)
-            submit_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-lg.btn-block.rounded-0.submit-captcha[type="submit"]').click()
-            time.sleep(3)
+
+            submit_button = driver.find_element(By.CSS_SELECTOR, 'button.btn.btn-primary.btn-lg.btn-block.rounded-0.submit-captcha[type="submit"]')
+            submit_button.click()
+            time.sleep(3) 
+
 
             try:
-                error_popup_close_button = driver.find_element(By.XPATH, "/html/body/div[5]/div/div/div[3]/button")
+                error_popup_close_button = driver.find_element(By.XPATH, "/html/body/div[5]/div/div/div[3]/button") 
                 error_popup_close_button.click()
                 time.sleep(1)
                 is_retry = True
-                time.sleep(2) 
+                print("Captcha incorrect, retrying...")
+                time.sleep(2)
                 continue 
             except:
                 try:
-                    driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]')
-                    return True
+                    driver.find_element(By.XPATH, '/html/body/div[6]/div/div[2]') 
+                    print("Captcha likely successful.")
+                    return True 
                 except:
+                    print("Captcha state uncertain, assuming retry needed...")
                     is_retry = True
                     time.sleep(2)
-                    continue
+                    continue 
         except Exception as e:
-            time.sleep(5)
-            continue
-            
+             print(f"Error during captcha attempt {attempts}: {e}")
+
+             time.sleep(5)
+             is_retry = True 
+             continue 
+    print("Failed to solve captcha after multiple attempts.")
+    return False 
+
+
 def captchaSave(is_retry=False):
+    """Original captchaSave function structure."""
     global driver
-    time.sleep(1) 
-    possible_div_numbers = [4, 5, 6]  
+    time.sleep(1)
+    possible_div_numbers = [4, 5, 6] 
     for div_num in possible_div_numbers:
-        xpath = f'/html/body/div[{div_num}]/div[2]/form/div/div/img'
+        xpath = f'/html/body/div[{div_num}]/div[2]/form/div/div/img' 
         try:
             l = driver.find_element(By.XPATH, xpath)
-            with open(f'captcha.png', 'wb') as file:
+            captcha_file = 'captcha.png'
+            with open(captcha_file, 'wb') as file:
                 file.write(l.screenshot_as_png)
-            captcha_window = CaptchaWindow(is_retry)
+            captcha_window = CaptchaWindow(is_retry) 
             return captcha_window.result
-        except:
-            continue  
+        except Exception as e: 
+            continue 
+
 
     print("Could not find captcha image after trying multiple XPaths.")
-    return None
+    return None 
+
 
 if __name__ == "__main__":
     app = App()
