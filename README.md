@@ -36,7 +36,7 @@ TikTool v1.1 is a bot application designed to automate interactions on the zefoy
 
 <img src="https://img.shields.io/badge/YouTube-%23FF0000.svg?logo=YouTube&logoColor=white">&nbsp; - Tutorial: https://www.youtube.com/watch?v=O-MBgMulvmk
 
-1. Install Python 3.8+ and add it to PATH during installation.
+1. Install Python 3.8+ and add it to PATH during installation.   [ DONT INSTALL LATEST ]
 2. Install Google Chrome.
 3. Download and extract the latest release ZIP.
 4. Open a terminal in the directory and install the needed packages with `pip install -r requirements.txt`
