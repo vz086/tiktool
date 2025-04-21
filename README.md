@@ -6,7 +6,7 @@
   <img alt="ViewCount" src="https://views.whatilearened.today/views/github/AdamBankz/tiktool.svg" align="center">
 </p>
 <p align="center">
-  <b>Star Goals:<br><s>⭐ 10 Stars - Small update - Better UI, Retry Captcha, Bot Statistics</s><br>⭐ 15 Stars - Add comment likes, shares and favourites <br>⭐ 25 Stars - Binary Cooldown Bypass [2x faster]<br>⭐ 50 Stars - Change to request-based script [10x faster]</>
+  <b>Star Goals:<br><s>⭐ 10 Stars - Small update - Better UI, Retry Captcha, Bot Statistics</s><br><s>⭐ 15 Stars - Add comment likes, shares and favourites</s><br>⭐ 50 Stars - Binary Cooldown Bypass [2x faster]<br>⭐ 75 Stars - Change to request-based script [10x faster]</>
     <br>
 </p>
 
