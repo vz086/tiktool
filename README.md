@@ -1,5 +1,5 @@
 
-<h1 align="center">TikTool v1.2</h1>
+<h1 align="center">TikTool v1.3</h1>
 <h3 align="center">Scroll down for an installation guide.</h3>
 <p align="center">
   <img src="https://github.com/user-attachments/assets/0212ce46-1e7b-41fa-a7b1-9a9cd4b46101" width="350" height="300"><br>
