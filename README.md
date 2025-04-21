@@ -25,6 +25,7 @@ TikTool v1.1 is a bot application designed to automate interactions on the zefoy
 
 ## Key Features
 
+*   Discord Webhook Notifications.
 *   User friendly interface using `customtkinter`
 *   Network blocking for the popups on the site.
 *   Statistics to track your botted numbers.
