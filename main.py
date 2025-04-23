@@ -504,7 +504,7 @@ class App(customtkinter.CTk):
     def run_likes_bot(self):
         global driver
         payload = {
-            "content": "193645 likes sent successfully."
+            "content": "1936 likes sent successfully."
             }
         try:
             openZefoy()
@@ -522,9 +522,9 @@ class App(customtkinter.CTk):
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[8]/div/div/div[1]/div/form/button')
                         target_button.click()
-                        self.total_likes += 193645
+                        self.total_likes += 1936
                         self.likes_stat.configure(text=f"Total Likes: {self.total_likes}")
-                        self.second_frame_textbox.insert("end", "193645 likes sent successfully!\n")
+                        self.second_frame_textbox.insert("end", "1936 likes sent successfully!\n")
                         self.second_frame_textbox.see("end")
                         requests.post(webhook, payload)
                     except:
@@ -593,7 +593,7 @@ class App(customtkinter.CTk):
     def run_views_bot(self):
         global driver
         payload = {
-            "content": "450000 views sent successfully!"
+            "content": "4500 views sent successfully!"
             }
         try:
             openZefoy()
@@ -611,9 +611,9 @@ class App(customtkinter.CTk):
                     try:
                         target_button = driver.find_element(By.XPATH, '/html/body/div[10]/div/div/div[1]/div/form/button')
                         target_button.click()
-                        self.total_views += 450000
+                        self.total_views += 4500
                         self.views_stat.configure(text=f"Total Views: {self.total_views}")
-                        self.fourth_frame_textbox.insert("end", "450000 views sent successfully!\n")
+                        self.fourth_frame_textbox.insert("end", "4500 views sent successfully!\n")
                         self.fourth_frame_textbox.see("end")
                         requests.post(webhook, payload)
                     except:
